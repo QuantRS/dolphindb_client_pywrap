@@ -652,7 +652,7 @@ impl TcpClient {
 pub enum DataValue {
     Void(),
     Bool(bool),
-    Char(),
+    Char(char),
     Short(i16),
     Int(i32),
     Long(i64),
@@ -680,42 +680,47 @@ impl BasicValue {
         return match num_type {
             DT_BOOL => {
                 DataValue::Bool(BasicBool::decode(client).await)
-            }
-            //CHAR
+            },
+            DT_CHAR => {
+                DataValue::Char(BasicChar::decode(client).await)
+            },
             DT_SHORT => {
                 DataValue::Short(BasicShort::decode(client).await)
-            }
+            },
             DT_INT => {
                 DataValue::Int(BasicInt::decode(client).await)
-            }
+            },
             DT_LONG => {
                 DataValue::Long(BasicLong::decode(client).await)
-            }
+            },
             DT_DATE => {
                 DataValue::Date(BasicDate::decode(client).await)
-            }
+            },
             //Month
             DT_TIME => {
                 DataValue::Time(BasicTime::decode(client).await)
-            }
+            },
             //Minute
             //Second
             DT_DATETIME => {
                 DataValue::DateTime(BasicDateTime::decode(client).await)
-            }
+            },
             //TimeStamp
             //NanoTime
             //NanoTimeStamp
-            DT_FLOAT | DT_DOUBLE => {
+            DT_FLOAT => {
                 DataValue::Float(BasicFloat::decode(client).await)
-            }
+            },
+            DT_DOUBLE => {
+                DataValue::Double(BasicDouble::decode(client).await)
+            },
             DT_STRING | DT_SYMBOL => {
                 DataValue::String(BasicString::decode(client).await)
-            }
+            },
             DT_VOID => {
                 BasicBool::decode(client).await;
                 DataValue::Void()
-            }
+            },
             _ => {
                 println!("ERROR");
                 DataValue::Void()
@@ -723,209 +728,137 @@ impl BasicValue {
         }
     }
 
-    async fn encode_scalar(client: &mut TcpClient, data_value: &DataValue, raw: bool) {
+    async fn encode_no_type(client: &mut TcpClient, data_value: &DataValue) {
         match data_value {
             DataValue::Bool(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_BOOL;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicBool::encode(client, &v).await;
-            }
-            DataValue::Char() => {
-
-            }
+            },
+            DataValue::Char(v) => {
+                BasicChar::encode(client, &v).await;
+            },
             DataValue::Short(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_SHORT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicShort::encode(client, &v).await;
-            }
+            },
             DataValue::Int(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicInt::encode(client, &v).await;
-            }
+            },
             DataValue::Long(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_LONG;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicLong::encode(client, &v).await;
-            }
+            },
             DataValue::Date(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicDate::encode(client, &v).await;
-            }
+            },
             //Month
             DataValue::Time(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicTime::encode(client, &v).await;
-            }
+            },
             //Minute
             //Second
             DataValue::DateTime(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicDateTime::encode(client, &v).await;
-            }
+            },
             //TimeStamp
             //NanoTime
             //NanoTimeStamp
             DataValue::Float(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_FLOAT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicFloat::encode(client, &v).await;
-            }
+            },
             DataValue::Double(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_DOUBLE;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicDouble::encode(client, &v).await;
-            }
+            },
             DataValue::String(v) | DataValue::Symbol(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_STRING;
-                    BasicShort::encode(client, &flag).await;
-                }
-
                 BasicString::encode(client, v).await;
-            }
+            },
             _ => {
-                //error!("无匹配类型.")
-            }
-        }
-    }
-
-    async fn encode_v(client: &mut TcpClient, data_value: &DataValue, raw: bool) {
-        match data_value {
-            DataValue::Bool(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_BOOL;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicBool::encode(client, &v).await;
-            }
-            DataValue::Char() => {
-
-            }
-            DataValue::Short(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_SHORT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicShort::encode(client, &v).await;
-            }
-            DataValue::Int(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicInt::encode(client, &v).await;
-            }
-            DataValue::Long(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_LONG;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicLong::encode(client, &v).await;
-            }
-            DataValue::Date(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicDate::encode(client, &v).await;
-            }
-            //Month
-            DataValue::Time(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicTime::encode(client, &v).await;
-            }
-            //Minute
-            //Second
-            DataValue::DateTime(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_INT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicDateTime::encode(client, &v).await;
-            }
-            //TimeStamp
-            //NanoTime
-            //NanoTimeStamp
-            DataValue::Float(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_FLOAT;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicFloat::encode(client, &v).await;
-            }
-            DataValue::Double(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_DOUBLE;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicDouble::encode(client, &v).await;
-            }
-            DataValue::String(v) | DataValue::Symbol(v) => {
-                if !raw {
-                    let flag = (DF_SCALAR << 8) + DT_STRING;
-                    BasicShort::encode(client, &flag).await;
-                }
-
-                BasicString::encode(client, v).await;
-            }
-
-            DataValue::Table(v) => {
-                BasicTable::encode(client, v).await;
-            }
-            DataValue::Vector(v) => {
-                BasicVector::encode(client, v).await;
-            }
-            _ => {
-                //error!("无匹配类型.")
+                println!("无匹配类型.")
             }
         }
     }
 
     async fn encode(client: &mut TcpClient, data_value: &DataValue) {
-        BasicValue::encode_v(client, data_value, false).await;
+        match data_value {
+            DataValue::Bool(v) => {
+                let flag = (DF_SCALAR << 8) + DT_BOOL;
+                BasicShort::encode(client, &flag).await;
+
+                BasicBool::encode(client, &v).await;
+            },
+            DataValue::Char(v) => {
+                let flag = (DF_SCALAR << 8) + DT_CHAR;
+                BasicShort::encode(client, &flag).await;
+
+                BasicChar::encode(client, &v).await;
+            },
+            DataValue::Short(v) => {
+                let flag = (DF_SCALAR << 8) + DT_SHORT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicShort::encode(client, &v).await;
+            },
+            DataValue::Int(v) => {
+                let flag = (DF_SCALAR << 8) + DT_INT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicInt::encode(client, &v).await;
+            },
+            DataValue::Long(v) => {
+                let flag = (DF_SCALAR << 8) + DT_LONG;
+                BasicShort::encode(client, &flag).await;
+
+                BasicLong::encode(client, &v).await;
+            },
+            DataValue::Date(v) => {
+                let flag = (DF_SCALAR << 8) + DT_INT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicDate::encode(client, &v).await;
+            },
+            //Month
+            DataValue::Time(v) => {
+                let flag = (DF_SCALAR << 8) + DT_INT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicTime::encode(client, &v).await;
+            },
+            //Minute
+            //Second
+            DataValue::DateTime(v) => {
+                let flag = (DF_SCALAR << 8) + DT_INT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicDateTime::encode(client, &v).await;
+            },
+            //TimeStamp
+            //NanoTime
+            //NanoTimeStamp
+            DataValue::Float(v) => {
+                let flag = (DF_SCALAR << 8) + DT_FLOAT;
+                BasicShort::encode(client, &flag).await;
+
+                BasicFloat::encode(client, &v).await;
+            },
+            DataValue::Double(v) => {
+                let flag = (DF_SCALAR << 8) + DT_DOUBLE;
+                BasicShort::encode(client, &flag).await;
+
+                BasicDouble::encode(client, &v).await;
+            },
+            DataValue::String(v) | DataValue::Symbol(v) => {
+                let flag = (DF_SCALAR << 8) + DT_STRING;
+                BasicShort::encode(client, &flag).await;
+
+                BasicString::encode(client, v).await;
+            },
+            DataValue::Table(v) => {
+                BasicTable::encode(client, v).await;
+            },
+            DataValue::Vector(v) => {
+                BasicVector::encode(client, v).await;
+            },
+            _ => {
+                println!("无匹配类型.")
+            }
+        }
     }
 }
 
@@ -946,7 +879,17 @@ impl BasicBool {
         }).await;
     }
 }
-//Char
+
+struct BasicChar {}
+impl BasicChar {
+    async fn decode(client: &mut TcpClient) -> char {
+        return client.read_byte().await as char;
+    }
+    async fn encode(client: &mut TcpClient, v: &char) {
+        client.write_byte(*v as u8).await;
+    }
+}
+
 struct BasicShort {}
 impl BasicShort {
     async fn decode(client: &mut TcpClient) -> i16 {
@@ -1253,7 +1196,7 @@ impl BasicVector {
         BasicInt::encode(client, &1).await;
 
         for dv in v.get() {
-            BasicValue::encode_scalar(client, dv, true).await;
+            BasicValue::encode_no_type(client, dv).await;
         }
     }
 }
