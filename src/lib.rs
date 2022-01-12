@@ -71,6 +71,7 @@ impl Connection {
                 Ok(df.into())
             },
             _ => {
+                println!("{:?}", data);
                 Ok(PyList::empty(_py).into())
             }
         }
