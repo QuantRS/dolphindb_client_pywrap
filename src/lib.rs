@@ -1,5 +1,5 @@
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 
 use numpy::npyffi;
 use pyo3::{AsPyPointer, ffi, prelude::*, types::{PyDict, PyList, PyTuple}};
@@ -27,10 +27,10 @@ impl Connection {
     pub fn run(&mut self, sql: String, _py: Python) -> PyResult<PyObject> {
         let client_clone = self.conn.clone();
 
-        let rt = self.runtime.lock().unwrap();
+        let rt = self.runtime.lock().unwrap_or_else(PoisonError::into_inner);
         let data = rt.block_on(async move {
-            client_clone.lock().await.run(&sql).await.unwrap()
-        });
+            client_clone.lock().await.run(&sql).await
+        }).unwrap();
 
         return match data {
             dolphindb::DataValue::Table(table) => {
