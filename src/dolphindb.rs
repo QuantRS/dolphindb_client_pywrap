@@ -396,15 +396,17 @@ impl Date {
 
 #[derive(Debug, Clone)]
 pub struct Time {
-    hour: i32,
-    minute: i32,
-    second: i32,
-    millisecond: i32,
+    pub raw: i32,
+    pub hour: i32,
+    pub minute: i32,
+    pub second: i32,
+    pub millisecond: i32,
 }
 
 impl Time {
     pub fn new(hour: i32, minute: i32, second: i32, millisecond: i32) -> Time {
         Time {
+            raw: 0,
             hour,
             minute,
             second,
@@ -412,6 +414,24 @@ impl Time {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Minute {
+    raw: i32,
+    hour: i32,
+    minute: i32
+}
+
+impl Minute {
+    pub fn new(hour: i32, minute: i32) -> Minute {
+        Minute {
+            raw: 0,
+            hour,
+            minute,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct DateTime {
@@ -659,7 +679,7 @@ pub enum DataValue {
     Date(Date),
     Month(),
     Time(Time),
-    Minute(),
+    Minute(Minute),
     Second(),
     DateTime(DateTime),
     TimeStamp(),
@@ -700,7 +720,9 @@ impl BasicValue {
             DT_TIME => {
                 DataValue::Time(BasicTime::decode(client).await)
             },
-            //Minute
+            DT_MINUTE => {
+                DataValue::Minute(BasicMinute::decode(client).await)
+            }
             //Second
             DT_DATETIME => {
                 DataValue::DateTime(BasicDateTime::decode(client).await)
@@ -1020,6 +1042,7 @@ impl BasicTime {
     async fn decode(client: &mut TcpClient) -> Time {
         let milliseconds = BasicInt::decode(client).await;
         return Time{
+            raw: milliseconds,
             hour: milliseconds/3600000,
             minute: milliseconds/60000 % 60,
             second: milliseconds/1000 % 60,
@@ -1028,6 +1051,21 @@ impl BasicTime {
     }
     async fn encode(client: &mut TcpClient, v: &Time) {
         BasicInt::encode(client, &(((v.hour * 60 + v.minute) * 60 + v.second) * 1000 + v.millisecond)).await;
+    }
+}
+
+struct BasicMinute;
+impl BasicMinute {
+    async fn decode(client: &mut TcpClient) -> Minute {
+        let seconds = BasicInt::decode(client).await;
+        return Minute{
+            raw: seconds,
+            hour: seconds / 60,
+            minute: seconds % 60,
+        }
+    }
+    async fn encode(client: &mut TcpClient, v: &Minute) {
+        BasicInt::encode(client, &(v.hour * 60 + v.minute)).await;
     }
 }
 

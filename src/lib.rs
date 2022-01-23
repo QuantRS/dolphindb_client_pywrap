@@ -54,6 +54,10 @@ impl Connection {
                         rows.push(list_from_double(col.get_vector().get(), _py));
                     } else if col.get_num_type() == dolphindb::DT_DATE {
                         rows.push(list_from_date(col.get_vector().get(), _py));
+                    } else if col.get_num_type() == dolphindb::DT_TIME {
+                        rows.push(list_from_time(col.get_vector().get(), _py));
+                    } else if col.get_num_type() == dolphindb::DT_MINUTE {
+                        rows.push(list_from_minute(col.get_vector().get(), _py));
                     }
                 }
 
@@ -286,6 +290,70 @@ fn list_from_date(datas: &Vec<dolphindb::DataValue>, _py: Python) -> PyObject {
         for mut index in 0..length {
             let mut raw = match datas.get(index as usize).unwrap() { dolphindb::DataValue::Date(n) => { n.raw }, _ => { 0 } } as i64;
             raw *= 86400000000000;
+
+            let row = numpy::PY_ARRAY_API.PyArray_GetPtr(
+                array as *mut numpy::npyffi::PyArrayObject,
+                &mut index as *mut numpy::npyffi::npy_intp,
+            ) as *mut i64;
+            *row = raw as i64;
+        }
+
+        PyObject::from_owned_ptr(_py, array as *mut pyo3::ffi::PyObject)
+    }
+}
+
+fn list_from_time(datas: &Vec<dolphindb::DataValue>, _py: Python) -> PyObject {
+    return unsafe {
+        let mut dtype: *mut numpy::npyffi::PyArray_Descr = std::ptr::null_mut();
+        npyffi::PY_ARRAY_API.PyArray_DescrConverter("datetime64[ms]".into_py(_py).as_ptr(), &mut dtype);
+
+        let mut length = datas.len() as isize;
+        let array = numpy::PY_ARRAY_API.PyArray_NewFromDescr(
+            numpy::PY_ARRAY_API.get_type_object(numpy::npyffi::array::NpyTypes::PyArray_Type),
+            dtype,
+            1_i32,
+            &mut length as *mut numpy::npyffi::npy_intp,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            0_i32,
+            std::ptr::null_mut(),
+        );
+
+        for mut index in 0..length {
+            let mut raw = match datas.get(index as usize).unwrap() { dolphindb::DataValue::Time(n) => { n.raw }, _ => { 0 } } as i64;
+            raw *= 1000000;
+
+            let row = numpy::PY_ARRAY_API.PyArray_GetPtr(
+                array as *mut numpy::npyffi::PyArrayObject,
+                &mut index as *mut numpy::npyffi::npy_intp,
+            ) as *mut i64;
+            *row = raw as i64;
+        }
+
+        PyObject::from_owned_ptr(_py, array as *mut pyo3::ffi::PyObject)
+    }
+}
+
+fn list_from_minute(datas: &Vec<dolphindb::DataValue>, _py: Python) -> PyObject {
+    return unsafe {
+        let mut dtype: *mut numpy::npyffi::PyArray_Descr = std::ptr::null_mut();
+        npyffi::PY_ARRAY_API.PyArray_DescrConverter("datetime64[m]".into_py(_py).as_ptr(), &mut dtype);
+
+        let mut length = datas.len() as isize;
+        let array = numpy::PY_ARRAY_API.PyArray_NewFromDescr(
+            numpy::PY_ARRAY_API.get_type_object(numpy::npyffi::array::NpyTypes::PyArray_Type),
+            dtype,
+            1_i32,
+            &mut length as *mut numpy::npyffi::npy_intp,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            0_i32,
+            std::ptr::null_mut(),
+        );
+
+        for mut index in 0..length {
+            let mut raw = match datas.get(index as usize).unwrap() { dolphindb::DataValue::Time(n) => { n.raw }, _ => { 0 } } as i64;
+            raw *= 60000000000;
 
             let row = numpy::PY_ARRAY_API.PyArray_GetPtr(
                 array as *mut numpy::npyffi::PyArrayObject,
